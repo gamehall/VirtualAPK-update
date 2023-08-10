@@ -1,0 +1,65 @@
+ext.GROUP_ID = 'com.didi.virtualapk'
+ext.CORE_ID = 'core'
+ext.GRADLEW_PLUGIN_ID = 'gradle-plugin'
+ext.TRANSFORM_ID = 'transform'
+ext.TRANSFORM_KIT = 'transform-kit'
+ext.VERSION_ID = '1.0.1-SNAPSHOT'
+
+ext.RELEASE_URL=''
+ext.SNAPSHOT_URL=''
+ext.TV_MAVEN_NAME =''
+ext.TV_MAVEN_PASSWORD=''
+//apply plugin: 'java-gradle-plugin'
+apply plugin: 'maven-publish'
+// 判断版本是Release or Snapshots
+def isReleaseBuild() {
+    return !VERSION_ID.contains("SNAPSHOT")
+}
+
+// 获取仓库url
+def getRepositoryUrl() {
+    return isReleaseBuild() ? RELEASE_URL : SNAPSHOT_URL
+}
+publishing{
+    publications{
+
+    }
+
+    repositories {
+        maven {
+            name = "maven"
+            allowInsecureProtocol = true
+            credentials {
+                username = TV_MAVEN_NAME
+                password = TV_MAVEN_PASSWORD
+            }
+            url = getRepositoryUrl()
+        }
+    }
+}
+//
+//publishing {
+//    publications {
+//        gradlePlugin(MavenPublication) {
+//            groupId = GROUP_ID
+//            artifactId = GRADLEW_PLUGIN_ID
+//            version = VERSION_ID
+//
+//            from components.java
+//        }
+//        transform(MavenPublication) {
+//            groupId = GROUP_ID
+//            artifactId = TRANSFORM_ID
+//            version = VERSION_ID
+//
+//            from components.java
+//        }
+//        transform_kit(MavenPublication) {
+//            groupId = GROUP_ID
+//            artifactId = TRANSFORM_KIT
+//            version = VERSION_ID
+//
+//            from components.java
+//        }
+//    }
+//}

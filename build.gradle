@@ -1,0 +1,82 @@
+buildscript {
+    loadVersions:
+    {// 读取versions.properties到ext中，供项目中直接用变量引用版本号
+        def versions_properties_path = 'buildScripts/gradle/versions.properties'
+        def versions = new Properties()
+        versions.load(file(versions_properties_path).newReader())
+        versions.forEach { key, value ->
+            ext.set(key, value)
+        }
+    }
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+        mavenLocal()
+        maven {
+            url "https://maven.google.com"
+        }
+        dependencies {
+            classpath "com.android.tools.build:gradle:$build_gradle_version"
+            classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+//            classpath 'com.tencent.shadow.coding:aar_to_jar_plugin'
+//            classpath 'com.tencent.shadow.coding:common-jar-settings'
+            classpath 'com.didi.virtualapk:gradle'
+        }
+    }
+}
+def osVersion = System.getProperty("os.name")
+println osVersion
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+        mavenLocal()
+        maven {
+            url "https://maven.google.com"
+        }
+    }
+}
+
+group = 'com.didi.virtualapk'
+ext {
+    versions = [
+            compileSdkVersion: 30,
+            buildToolsVersion: '30.0.3',
+            minSdkVersion    : 15,
+            targetSdkVersion : 25,
+            supportSdkVersion: '27.0.2'
+    ]
+
+    appVersions = [
+            hostVersionName     : '6.9.3.0',
+            hostVersionCode     : 6930,
+            mainpageVersionName : '5.1.6.2',
+            mainpageVersionCode : 5162,
+            choudGameVersionName: '6.1.6.2',
+            choudGameVersionCode: 6162,
+
+    ]
+}
+allprojects {
+    ext {
+        VERSION_COMPILE_SDK = 30
+        VERSION_BUILD_TOOLS = '30.0.3'
+
+        VERSION_MIN_SDK = 15
+        VERSION_TARGET_SDK = 25
+
+        SOURCE_COMPATIBILITY = JavaVersion.VERSION_1_8
+    }
+}
+
+project.rootProject.subprojects { Project p ->
+    p.configurations.all { Configuration configuration ->
+        resolutionStrategy {
+            dependencySubstitution {
+                substitute module("com.didi.virtualapk:core") using project(':CoreLibrary')
+            }
+        }
+    }
+}

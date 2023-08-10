@@ -1,0 +1,107 @@
+import com.android.build.gradle.api.LibraryVariant
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply from: '../config/maven.gradle'
+
+android {
+    compileSdkVersion versions.compileSdkVersion
+    buildToolsVersion versions.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion versions.minSdkVersion
+        targetSdkVersion versions.targetSdkVersion
+        versionCode 1
+        versionName "1.0.1"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+        }
+    }
+    libraryVariants.all { variant ->
+        variant.outputs.all { output ->
+            if (outputFile != null && outputFileName.endsWith('.aar')) {
+                outputFileName = "virtualapk-${archivesBaseName}-${version}.aar"
+            }
+        }
+    }
+    compileOptions {
+        sourceCompatibility SOURCE_COMPATIBILITY
+    }
+    lintOptions {
+        abortOnError false
+    }
+}
+
+def renameAPK(variant, defaultConfig, buildType) {
+    variant.outputs.each { output ->
+        def formattedDate = new Date().format('yyMMdd')
+
+        def file = output.packageApplication.outputFile
+        def fileName = applicationName + "_V" + defaultConfig.versionCode + "_" + formattedDate + "_" + buildType + ".apk"
+        output.packageApplication.outputFile = new File(file.parent, fileName)
+    }
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+final String projectAndroidStub = ':AndroidStub'
+
+dependencies {
+    api fileTree(dir: 'libs', include: ['*.jar'])
+
+    compileOnly project(projectAndroidStub)
+//    implementation "com.android.support:multidex:1.0.3"
+}
+
+// Because the components are created only during the afterEvaluate phase, you must
+// configure your publications using the afterEvaluate() lifecycle method.
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.release
+
+                // You can then customize attributes of the publication as shown below.
+                groupId = GROUP_ID
+                artifactId = CORE_ID
+                version = VERSION_ID
+            }
+            // Creates a Maven publication called “debug”.
+            debug(MavenPublication) {
+                // Applies the component for the debug build variant.
+                from components.debug
+
+                groupId = GROUP_ID
+                artifactId = CORE_ID
+                version = VERSION_ID
+            }
+        }
+    }
+}
+// Using Stub classes first when compiling.
+afterEvaluate {
+    project.android.libraryVariants.each { LibraryVariant variant ->
+        variant.javaCompile.doFirst { JavaCompile javaCompile ->
+            String projectAndroidStubPath = project.project(projectAndroidStub).projectDir.canonicalPath
+            println "projectAndroidStubPath: ${projectAndroidStubPath}"
+            File stubPath = javaCompile.classpath.find {
+                it.canonicalPath.startsWith(projectAndroidStubPath)
+            }
+            println "stubPath: ${stubPath}"
+            if (stubPath == null) {
+                throw new RuntimeException("reset bootclasspath error.")
+            }
+            def collection = project.files(stubPath, javaCompile.options.getBootstrapClasspath().asPath)
+            javaCompile.options.setBootstrapClasspath(collection)
+        }
+    }
+}
+

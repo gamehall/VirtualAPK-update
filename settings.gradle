@@ -1,0 +1,13 @@
+include ':app'
+include ':CoreLibrary'
+include ':AndroidStub'
+//include ':gradle-plugin'
+//include ':transform'
+//include ':transform-kit'
+include ':PluginDemo'
+
+includeBuild('didi-gradle-plugin') {
+    dependencySubstitution {
+        substitute module('com.didi.virtualapk:gradle') using project(':gradle-plugin')
+    }
+}
